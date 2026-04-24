@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mermaid Live Editor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #4fffb0;
+    --accent2: #7b6cff;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --error: #ff5f7e;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .logo span { color: var(--accent); }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: var(--accent);
+    color: #0d0f14;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .btn.primary:hover { background: #2fffaa; color: #000; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .pane-header .indicator {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .divider {
+    width: 4px;
+    background: var(--border);
+    cursor: col-resize;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .divider:hover { background: var(--accent2); }
+  .divider::after {
+    content: '⋮';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .editor-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  textarea {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    border: none;
+    outline: none;
+    padding: 20px;
+    resize: none;
+    caret-color: var(--accent);
+    tab-size: 2;
+  }
+  textarea::selection { background: rgba(79,255,176,0.2); }
+
+  .preview-area {
+    flex: 1;
+    background: var(--bg);
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+  }
+
+  .preview-inner {
+    max-width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    min-width: 300px;
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-inner svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .error-box {
+    background: rgba(255,95,126,0.1);
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--error);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    width: 100%;
+    white-space: pre-wrap;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .status-ok { color: var(--accent); }
+  .status-err { color: var(--error); }
+
+  .templates-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .tmpl-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tmpl-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .copy-svg-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-svg-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .preview-bg-dark .preview-inner { background: #1a1e2a; }
+  .preview-bg-light .preview-inner { background: #ffffff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    Mermaid <span>Live</span>
+  </div>
+  <div class="toolbar">
+    <div class="templates-wrap">
+      <span style="color:var(--text-muted);font-size:11px;font-family:var(--mono)">template:</span>
+      <button class="tmpl-btn" onclick="loadTemplate('flowchart')">flowchart</button>
+      <button class="tmpl-btn" onclick="loadTemplate('sequence')">sequence</button>
+      <button class="tmpl-btn" onclick="loadTemplate('class')">class</button>
+      <button class="tmpl-btn" onclick="loadTemplate('er')">ER</button>
+      <button class="tmpl-btn" onclick="loadTemplate('gantt')">gantt</button>
+    </div>
+    <button class="btn" onclick="copyCode(event)">Copy</button>
+    <button class="btn primary" onclick="exportSVG()">Export SVG</button>
+  </div>
+</header>
+
+<div class="main" id="main">
+  <div class="pane" id="leftPane">
+    <div class="pane-header">
+      <span>Editor</span>
+      <div class="indicator"></div>
+    </div>
+    <div class="editor-wrap">
+      <textarea id="editor" spellcheck="false" placeholder="Mermaidコードを入力..."></textarea>
+    </div>
+    <div class="status-bar">
+      <span id="statusText" class="status-ok">● Ready</span>
+      <span id="lineInfo">1:1</span>
+    </div>
+  </div>
+
+  <div class="divider" id="divider"></div>
+
+  <div class="pane" id="rightPane">
+    <div class="pane-header">
+      <span>Preview</span>
+      <button class="copy-svg-btn" onclick="toggleBg()" id="bgBtn">bg: dark</button>
+    </div>
+    <div class="preview-area preview-bg-dark" id="previewArea">
+      <div class="preview-inner" id="preview"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  securityLevel: 'loose',
+  fontFamily: 'JetBrains Mono, monospace',
+  themeVariables: {
+    background: '#13161e',
+    primaryColor: '#4fffb0',
+    primaryTextColor: '#e2e8f0',
+    primaryBorderColor: '#252a38',
+    lineColor: '#64748b',
+    secondaryColor: '#1a1e2a',
+    tertiaryColor: '#252a38',
+  }
+});
+
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+const statusText = document.getElementById('statusText');
+const lineInfo = document.getElementById('lineInfo');
+
+const templates = {
+  flowchart: `flowchart TD
+    A([Start]) --> B{入力チェック}
+    B -->|OK| C[処理実行]
+    B -->|NG| D[エラー返却]
+    C --> E[(DB保存)]
+    E --> F[通知送信]
+    F --> G([End])
+    D --> G`,
+
+  sequence: `sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant API as API Server
+    participant DB as Database
+
+    User->>FE: ログインリクエスト
+    FE->>API: POST /auth/login
+    API->>DB: ユーザー検索
+    DB-->>API: ユーザー情報
+    API-->>FE: JWT Token
+    FE-->>User: ダッシュボード表示`,
+
+  class: `classDiagram
+    class Order {
+        +String orderId
+        +String status
+        +Date createdAt
+        +create()
+        +cancel()
+    }
+    class OrderItem {
+        +String itemId
+        +int quantity
+        +float price
+    }
+    class Product {
+        +String sku
+        +String name
+        +float unitPrice
+    }
+    Order "1" --> "1..*" OrderItem
+    OrderItem "1" --> "1" Product`,
+
+  er: `erDiagram
+    ORDER ||--o{ ORDER_ITEM : contains
+    ORDER {
+        string order_id PK
+        string customer_id FK
+        date created_at
+        string status
+    }
+    ORDER_ITEM {
+        string item_id PK
+        string order_id FK
+        string product_id FK
+        int quantity
+    }
+    PRODUCT ||--o{ ORDER_ITEM : "is ordered in"
+    PRODUCT {
+        string product_id PK
+        string name
+        float price
+    }`,
+
+  gantt: `gantt
+    title プロジェクト計画
+    dateFormat YYYY-MM-DD
+    section 要件定義
+        ヒアリング    :a1, 2025-01-01, 7d
+        要件整理      :a2, after a1, 5d
+    section 設計
+        基本設計      :b1, after a2, 10d
+        詳細設計      :b2, after b1, 10d
+    section 開発
+        実装          :c1, after b2, 20d
+        単体テスト    :c2, after c1, 7d
+    section リリース
+        結合テスト    :d1, after c2, 5d
+        本番リリース  :milestone, after d1, 0d`
+};
+
+let renderTimeout;
+let bgMode = 'dark';
+let diagCount = 0;
+
+function loadTemplate(name) {
+  editor.value = templates[name];
+  scheduleRender();
+}
+
+function scheduleRender() {
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(render, 400);
+}
+
+async function render() {
+  const code = editor.value.trim();
+  if (!code) {
+    preview.innerHTML = '<span style="color:var(--text-muted);font-family:var(--mono);font-size:12px">コードを入力してください...</span>';
+    statusText.textContent = '● Ready';
+    statusText.className = 'status-ok';
+    return;
+  }
+
+  try {
+    diagCount++;
+    const id = 'mmd-' + diagCount;
+    const { svg } = await mermaid.render(id, code);
+    preview.innerHTML = svg;
+    const svgEl = preview.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.maxWidth = '100%';
+      svgEl.style.height = 'auto';
+    }
+    statusText.textContent = '● OK';
+    statusText.className = 'status-ok';
+  } catch (e) {
+    preview.innerHTML = `<div class="error-box">⚠ Syntax Error\n\n${e.message || e}</div>`;
+    statusText.textContent = '✕ Error';
+    statusText.className = 'status-err';
+  }
+}
+
+function copyCode(e) {
+  navigator.clipboard.writeText(editor.value);
+  const btn = e.target;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+function exportSVG() {
+  const svgEl = preview.querySelector('svg');
+  if (!svgEl) return;
+  const svgStr = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'diagram.svg';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function toggleBg() {
+  const area = document.getElementById('previewArea');
+  const btn = document.getElementById('bgBtn');
+  if (bgMode === 'dark') {
+    area.className = 'preview-area preview-bg-light';
+    bgMode = 'light';
+    btn.textContent = 'bg: light';
+  } else {
+    area.className = 'preview-area preview-bg-dark';
+    bgMode = 'dark';
+    btn.textContent = 'bg: dark';
+  }
+}
+
+// カーソル位置表示
+editor.addEventListener('keyup', updateCursor);
+editor.addEventListener('click', updateCursor);
+function updateCursor() {
+  const val = editor.value;
+  const pos = editor.selectionStart;
+  const lines = val.substring(0, pos).split('\n');
+  lineInfo.textContent = `${lines.length}:${lines[lines.length - 1].length + 1}`;
+}
+
+// パネルリサイズ
+const divider = document.getElementById('divider');
+const leftPane = document.getElementById('leftPane');
+const rightPane = document.getElementById('rightPane');
+const mainEl = document.getElementById('main');
+let dragging = false;
+
+divider.addEventListener('mousedown', e => { dragging = true; e.preventDefault(); });
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const rect = mainEl.getBoundingClientRect();
+  const pct = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+  if (pct > 20 && pct < 80) {
+    leftPane.style.flex = 'none';
+    leftPane.style.width = pct + '%';
+    rightPane.style.flex = '1';
+  }
+});
+document.addEventListener('mouseup', () => { dragging = false; });
+
+// Tabキー対応
+editor.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = editor.selectionStart;
+    editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = s + 2;
+  }
+});
+
+editor.addEventListener('input', scheduleRender);
+
+// 初期ロード
+loadTemplate('flowchart');
+</script>
+</body>
+</html>
