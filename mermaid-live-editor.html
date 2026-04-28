@@ -8,15 +8,15 @@
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
 
   :root {
-    --bg: #0d0f14;
-    --surface: #13161e;
-    --surface2: #1a1e2a;
-    --border: #252a38;
-    --accent: #4fffb0;
-    --accent2: #7b6cff;
-    --text: #e2e8f0;
-    --text-muted: #64748b;
-    --error: #ff5f7e;
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --surface2: #eef2ff;
+    --border: #d1d5db;
+    --accent: #2563eb;
+    --accent2: #4f46e5;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --error: #dc2626;
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Syne', sans-serif;
   }
@@ -257,7 +257,7 @@
   }
   .copy-svg-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  .preview-bg-dark .preview-inner { background: #1a1e2a; }
+  .preview-bg-dark .preview-inner { background: #ffffff; }
   .preview-bg-light .preview-inner { background: #ffffff; }
 </style>
 </head>
@@ -302,9 +302,9 @@
   <div class="pane" id="rightPane">
     <div class="pane-header">
       <span>Preview</span>
-      <button class="copy-svg-btn" onclick="toggleBg()" id="bgBtn">bg: dark</button>
+      <button class="copy-svg-btn" onclick="toggleBg()" id="bgBtn">bg: light</button>
     </div>
-    <div class="preview-area preview-bg-dark" id="previewArea">
+    <div class="preview-area preview-bg-light" id="previewArea">
       <div class="preview-inner" id="preview"></div>
     </div>
   </div>
@@ -314,17 +314,19 @@
 <script>
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'dark',
+  theme: 'default',
   securityLevel: 'loose',
   fontFamily: 'JetBrains Mono, monospace',
   themeVariables: {
-    background: '#13161e',
-    primaryColor: '#4fffb0',
-    primaryTextColor: '#e2e8f0',
-    primaryBorderColor: '#252a38',
-    lineColor: '#64748b',
-    secondaryColor: '#1a1e2a',
-    tertiaryColor: '#252a38',
+    background: '#ffffff',
+    primaryColor: '#ffffff',
+    primaryTextColor: '#000000',
+    textColor: '#000000',
+    lineColor: '#000000',
+    primaryBorderColor: '#000000',
+    secondaryColor: '#f8fafc',
+    tertiaryColor: '#e5e7eb',
+    arrowheadColor: '#000000'
   }
 });
 
@@ -416,7 +418,7 @@ const templates = {
 };
 
 let renderTimeout;
-let bgMode = 'dark';
+let bgMode = 'light';
 let diagCount = 0;
 
 function loadTemplate(name) {
